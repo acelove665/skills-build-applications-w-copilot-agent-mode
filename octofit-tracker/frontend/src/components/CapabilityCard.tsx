@@ -1,29 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { getJson } from '../api/client.js';
 
-type LoadState<T> =
+export type LoadState<T> =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'success'; items: T[] };
 
-type Props<T> = {
-  title: string;
-  description: string;
-  path: string;
-  dataKey: string;
-  emptyMessage: string;
-  getKey: (item: T, index: number) => string;
-  renderItem: (item: T) => ReactNode;
-};
-
-export function CapabilityCard<T>({ title, description, path, dataKey, emptyMessage, getKey, renderItem }: Props<T>) {
+export function useApiData<T>(load: () => Promise<T[]>) {
   const [state, setState] = useState<LoadState<T>>({ status: 'loading' });
 
   useEffect(() => {
     let active = true;
-    getJson<Record<string, T[]>>(path)
-      .then((response) => {
-        const items = response[dataKey];
+    load()
+      .then((items) => {
         if (!Array.isArray(items)) throw new Error('API response did not contain a list');
         if (active) setState({ status: 'success', items });
       })
@@ -33,8 +21,21 @@ export function CapabilityCard<T>({ title, description, path, dataKey, emptyMess
     return () => {
       active = false;
     };
-  }, [path, dataKey]);
+  }, [load]);
 
+  return state;
+}
+
+type Props<T> = {
+  title: string;
+  description: string;
+  state: LoadState<T>;
+  emptyMessage: string;
+  getKey: (item: T, index: number) => string;
+  renderItem: (item: T) => ReactNode;
+};
+
+export function CapabilityCard<T>({ title, description, state, emptyMessage, getKey, renderItem }: Props<T>) {
   return (
     <section className="card h-100">
       <div className="card-body">
