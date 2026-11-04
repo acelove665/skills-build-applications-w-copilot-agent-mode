@@ -138,7 +138,7 @@ export async function suggestWorkouts(userEmail: string) {
             : `A suggested workout for your ${user.fitnessGoal} goal.`,
       };
     })
-    .sort((left, right) => right.score - left.score || left.workout.title.localeCompare(right.workout.title))
+    .sort((left, right) => right.score - left.score || (left.workout.title ?? '').localeCompare(right.workout.title ?? ''))
     .map(({ workout, reason }) => ({ ...workout, reason }));
 }
 
